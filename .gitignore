@@ -1,0 +1,21 @@
+# IDE
+.vs/
+.idea/
+.vscode/
+
+# Сборка
+bin/
+obj/
+build/
+Debug/
+Release/
+*.o
+*.obj
+*.exe
+
+# Временные файлы
+*.tmp
+*.log
+*.user
+Thumbs.db
+EOF
