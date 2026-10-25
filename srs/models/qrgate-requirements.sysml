@@ -55,13 +55,15 @@ package QRGate_Requirements {
     #derivation connection { end #original ::> occupancy; end #derive ::> liveChart; }
     #derivation connection { end #original ::> occupancy; end #derive ::> capacityAlert; }
 
-    // Удовлетворение требований системой
-    satisfy cameraScan by QRGate;
-    satisfy validation by QRGate;
-    satisfy signedQr by QRGate;
-    satisfy antiPassback by QRGate;
-    satisfy liveChart by QRGate;
-    satisfy capacityAlert by QRGate;
-    satisfy validationLatency by QRGate;
-    satisfy httpsOnly by QRGate;
+    // Удовлетворение требований системой (satisfy ссылается на использование части)
+    part qrgateSystem : QRGate;
+
+    satisfy cameraScan by qrgateSystem;
+    satisfy validation by qrgateSystem;
+    satisfy signedQr by qrgateSystem;
+    satisfy antiPassback by qrgateSystem;
+    satisfy liveChart by qrgateSystem;
+    satisfy capacityAlert by qrgateSystem;
+    satisfy validationLatency by qrgateSystem;
+    satisfy httpsOnly by qrgateSystem;
 }

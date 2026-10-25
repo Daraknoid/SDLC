@@ -21,10 +21,21 @@ ROOT = Path(__file__).resolve().parent.parent
 MODELS = ROOT / "srs" / "models"
 OUT = ROOT / "srs" / "img"
 
-FONT_DIR = Path("C:/Windows/Fonts")
-FONT_REG = FONT_DIR / "segoeui.ttf"
-FONT_BOLD = FONT_DIR / "segoeuib.ttf"
-FONT_MONO = FONT_DIR / "consola.ttf"
+
+def first_font(*candidates: str) -> Path:
+    """Первый существующий шрифт: Windows, затем Linux (DejaVu), затем macOS."""
+    for c in candidates:
+        if Path(c).exists():
+            return Path(c)
+    raise FileNotFoundError("Не найден шрифт с кириллицей, проверьте пути: " + ", ".join(candidates))
+
+
+FONT_REG = first_font("C:/Windows/Fonts/segoeui.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                      "/System/Library/Fonts/Supplemental/Arial.ttf")
+FONT_BOLD = first_font("C:/Windows/Fonts/segoeuib.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                       "/System/Library/Fonts/Supplemental/Arial Bold.ttf")
+FONT_MONO = first_font("C:/Windows/Fonts/consola.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                       "/System/Library/Fonts/Supplemental/Courier New.ttf")
 
 
 # --------------------------------------------------------------------------- #
@@ -115,12 +126,6 @@ def parse(text: str) -> list[Node]:
         return nodes
 
     return block()
-
-
-def walk(nodes: list[Node]):
-    for nd in nodes:
-        yield nd
-        yield from walk(nd.children)
 
 
 def load(name: str) -> list[Node]:
@@ -215,10 +220,6 @@ class Mockup:
         self.root = root
         self.defs = defs  # имя part def -> базовый тип
 
-    def kind(self, type_name: str) -> str:
-        # PrimaryButton :> Button и т. п.: используем точный тип, если он обрабатывается
-        return type_name
-
     def render(self, path: Path):
         m = re.match(r"part\s+(\w+)\s*:\s*(\w+)", self.root.head)
         typ = m.group(2)
@@ -245,7 +246,6 @@ class Mockup:
             d.rounded_rectangle([90 * s, 8 * s, (W - 20) * s, 36 * s], radius=int(8 * s), fill=C["white"])
             d.text((104 * s, 12 * s), a.get("text", ""), font=font(14 * s), fill=C["muted"])
             ox, oy = 0, bar * s
-            img = img
         self.d = d
         self.img = img
         for ch in self.root.children:
@@ -626,6 +626,9 @@ def render_requirements():
         m = re.match(r"satisfy\s+(\w+)\s+by\s+(\w+)", nd.head)
         if m:
             sats.append(m.group(1))
+            satisfier = m.group(2)
+    sys_type = next(re.match(r"part\s+\w+\s*:\s*(\w+)", nd.head).group(1) for nd in pkg.children
+                    if re.match(rf"part\s+{satisfier}\s*:", nd.head))
 
     goals = [r for r in order if reqs[r][1] == "BusinessGoal"]
     others = [r for r in order if r not in goals]
@@ -682,7 +685,8 @@ def render_requirements():
         text_center(d, [x0, y0 + 26, x1, y0 + 54], r, font(16, True), INK)
         d.text((x0 + 10, y0 + 62), f"id = \"{rid}\"", font=font(13, mono=True), fill=(37, 99, 235))
         text_left(d, (x0 + 10, y0 + 84), f"text = \"{doc}\"", font(14), (51, 65, 85), width=x1 - x0 - 20, spacing=1.15)
-    block(d, sys_box, "part def", "QRGate", "Мобильный веб-сканер, панель администратора, сервер валидации", head_fill=(191, 219, 254))
+    block(d, sys_box, "part", f"{satisfier} : {sys_type}",
+          "Мобильный веб-сканер, панель администратора, сервер валидации", head_fill=(191, 219, 254))
 
     path = OUT / "requirements-diagram.png"
     img.save(path)
